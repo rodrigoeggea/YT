@@ -414,7 +414,7 @@
           <span class="text-content" id="search-text"></span>
           <span class="virtual-cursor" id="virtual-cursor"></span>
         </div>
-        <button type="button" class="clear-btn" title="Limpar e Fechar" id="clear-search-btn">
+        <button type="button" class="clear-btn" title="Fechar Teclado" id="clear-search-btn">
           <svg viewBox="0 0 24 24">
             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
           </svg>
@@ -609,12 +609,10 @@
       triggerSearch();
     });
 
-    // Botão "X" para limpar o texto e recolher o teclado virtual
+    // Botão "X" para fechar/esconder o teclado virtual sem apagar o texto
     clearSearchBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      currentQuery = "";
-      updateDisplay();
       closeKeyboard();
     });
 
