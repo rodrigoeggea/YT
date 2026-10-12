@@ -3,782 +3,572 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Music & Video Finder</title>
-  <!-- Google Fonts: Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+  <title>YTAuto</title>
   <style>
     :root {
       --bg-main: #0f0f0f;
-      --bg-header: rgba(15, 15, 15, 0.94);
-      --bg-card: #181818;
-      --bg-card-hover: #222222;
-      --border-color: #2b2b2b;
-      --border-focus: #ff0000;
-      --text-primary: #f1f1f1;
-      --text-secondary: #aaaaaa;
-      --text-muted: #717171;
-      --accent-red: #ff0000;
-      --accent-red-hover: #cc0000;
+      --bg-surface: #1f1f1f;
+      --bg-surface-hover: #272727;
+      --border-color: #303030;
+      --text-main: #f1f1f1;
+      --text-muted: #aaaaaa;
+      --accent: #ff0000;
+      --accent-hover: #cc0000;
+      --key-bg: #2b2b2b;
+      --key-hover: #3d3d3d;
+      --key-active: #4a4a4a;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-main);
-      color: var(--text-primary);
+      color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      line-height: 1.5;
     }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: var(--bg-main);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #282828;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #3e3e3e;
-    }
-
-    /* Header & Navigation Bar */
     header {
       position: sticky;
       top: 0;
-      z-index: 50;
-      background: var(--bg-header);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      z-index: 100;
+      background-color: var(--bg-main);
       border-bottom: 1px solid var(--border-color);
-      padding: 0.85rem 1.5rem;
-    }
-
-    .header-inner {
-      max-width: 1400px;
-      margin: 0 auto;
+      padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1.25rem;
+      gap: 16px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.65rem;
-      text-decoration: none;
-      color: var(--text-primary);
+      gap: 8px;
       font-size: 1.25rem;
       font-weight: 700;
-      letter-spacing: -0.02em;
-      cursor: pointer;
-      user-select: none;
+      letter-spacing: -0.5px;
+      color: var(--text-main);
+      text-decoration: none;
       flex-shrink: 0;
     }
 
     .brand-icon {
-      width: 36px;
-      height: 36px;
-      background: var(--accent-red);
-      border-radius: 10px;
+      color: var(--accent);
       display: flex;
       align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 14px rgba(255, 0, 0, 0.35);
     }
 
-    .brand-icon svg {
-      width: 18px;
-      height: 18px;
-      fill: #ffffff;
-      margin-left: 2px;
-    }
-
-    .brand-accent {
-      color: var(--accent-red);
-    }
-
-    /* Search Bar Form */
-    .search-form {
+    .search-wrapper {
+      position: relative;
       flex: 1;
-      max-width: 620px;
-      display: flex;
-      align-items: center;
-      position: relative;
+      max-width: 640px;
+      margin: 0 auto;
     }
 
-    .search-input-wrapper {
-      position: relative;
-      width: 100%;
+    .search-box {
+      display: flex;
+      align-items: center;
+      background-color: #121212;
+      border: 1px solid var(--border-color);
+      border-radius: 40px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-box:focus-within {
+      border-color: #3ea6ff;
+      box-shadow: 0 0 0 1px #3ea6ff;
     }
 
     .search-input {
-      width: 100%;
-      background: #121212;
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      font-size: 0.95rem;
-      border-radius: 9999px;
-      padding: 0.65rem 2.8rem 0.65rem 1.25rem;
+      flex: 1;
+      background: transparent;
+      border: none;
       outline: none;
-      transition: all 0.2s ease;
-      font-family: inherit;
-    }
-
-    .search-input:focus {
-      border-color: rgba(255, 0, 0, 0.85);
-      box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.15);
-      background: #161616;
+      padding: 10px 18px;
+      font-size: 1rem;
+      color: var(--text-main);
+      cursor: pointer;
     }
 
     .search-input::placeholder {
-      color: #666666;
-    }
-
-    .clear-btn {
-      position: absolute;
-      right: 0.85rem;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
       color: var(--text-muted);
-      cursor: pointer;
-      padding: 0.25rem;
-      font-size: 0.85rem;
-      line-height: 1;
-      display: none;
-      border-radius: 50%;
     }
 
-    .clear-btn:hover {
-      color: var(--text-primary);
-    }
-
-    .search-submit-btn {
-      margin-left: 0.6rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      padding: 0.65rem 1.2rem;
-      border-radius: 9999px;
+    .search-btn {
+      background: var(--bg-surface);
+      border: none;
+      border-left: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 22px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
+      transition: background-color 0.2s;
     }
 
-    .search-submit-btn:hover {
-      background: #252525;
-      border-color: #404040;
+    .search-btn:hover {
+      background-color: var(--bg-surface-hover);
     }
 
-    .search-submit-btn:active {
+    .search-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* Teclado Virtual Dropdown */
+    .virtual-keyboard {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: #181818;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+      padding: 12px;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 200;
+      animation: fadeInDown 0.18s ease-out;
+    }
+
+    .virtual-keyboard.active {
+      display: flex;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .keyboard-row {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+    }
+
+    .key {
+      flex: 1;
+      height: 42px;
+      background-color: var(--key-bg);
+      color: var(--text-main);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.1s, transform 0.05s;
+    }
+
+    .key:hover {
+      background-color: var(--key-hover);
+    }
+
+    .key:active {
+      background-color: var(--key-active);
       transform: scale(0.97);
     }
 
-    .badge-info {
-      display: none;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      padding: 0.4rem 0.85rem;
-      border-radius: 9999px;
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      flex-shrink: 0;
+    .key-special {
+      background-color: #222222;
+      color: #dddddd;
+      font-size: 0.85rem;
     }
 
-    .badge-dot {
-      width: 7px;
-      height: 7px;
-      background: #10b981;
-      border-radius: 50%;
-      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    .key-space {
+      flex: 3.5;
     }
 
-    @media (min-width: 900px) {
-      .badge-info {
-        display: flex;
-      }
+    .key-backspace, .key-shift, .key-clear {
+      flex: 1.4;
     }
 
-    /* Main Container */
+    .key-search {
+      flex: 1.8;
+      background-color: var(--accent);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .key-search:hover {
+      background-color: var(--accent-hover);
+    }
+
     main {
       flex: 1;
-      max-width: 1400px;
-      width: 100%;
+      padding: 24px;
+      max-width: 1440px;
       margin: 0 auto;
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Status & Subheader Bar */
-    .status-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 1.5rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 0.88rem;
-      color: var(--text-secondary);
-    }
-
-    .status-title {
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .status-query {
-      color: var(--accent-red);
-      font-style: italic;
-    }
-
-    /* Video Results Grid */
-    .video-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-    }
-
-    @media (min-width: 1200px) {
-      .video-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-
-    /* Video Card Component */
-    .video-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      text-decoration: none;
-      color: inherit;
-      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
-    }
-
-    .video-card:hover {
-      transform: translateY(-4px);
-      border-color: #444444;
-      background: var(--bg-card-hover);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-    }
-
-    .thumbnail-container {
-      position: relative;
       width: 100%;
-      padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-      background: #111111;
-      overflow: hidden;
     }
 
-    .thumbnail-img {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s ease;
-    }
-
-    .video-card:hover .thumbnail-img {
-      transform: scale(1.05);
-    }
-
-    .card-play-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-
-    .video-card:hover .card-play-overlay {
-      opacity: 1;
-    }
-
-    .play-icon-badge {
-      width: 48px;
-      height: 48px;
-      background: var(--accent-red);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-      transform: scale(0.9);
-      transition: transform 0.2s ease;
-    }
-
-    .video-card:hover .play-icon-badge {
-      transform: scale(1);
-    }
-
-    .play-icon-badge svg {
-      width: 22px;
-      height: 22px;
-      fill: #ffffff;
-      margin-left: 2px;
-    }
-
-    .external-badge {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      background: rgba(0, 0, 0, 0.82);
-      backdrop-filter: blur(4px);
-      color: #eaeaea;
-      font-size: 0.68rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      pointer-events: none;
-    }
-
-    .card-content {
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      justify-content: space-between;
-    }
-
-    .video-title {
-      font-size: 0.92rem;
-      font-weight: 600;
-      line-height: 1.35;
-      margin-bottom: 0.45rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      color: var(--text-primary);
-      transition: color 0.15s ease;
-    }
-
-    .video-card:hover .video-title {
-      color: #ff4d4d;
-    }
-
-    .channel-title {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 0.75rem;
-    }
-
-    .card-footer {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      padding-top: 0.55rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    /* Loading State Spinner */
-    .state-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 4.5rem 1rem;
+    .status-msg {
       text-align: center;
-      flex: 1;
+      padding: 40px 16px;
+      color: var(--text-muted);
+      font-size: 1.1rem;
     }
 
     .spinner {
-      width: 44px;
-      height: 44px;
-      border: 4px solid var(--border-color);
-      border-top: 4px solid var(--accent-red);
+      width: 38px;
+      height: 38px;
+      border: 3px solid rgba(255, 255, 255, 0.15);
+      border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
-      margin-bottom: 1.25rem;
+      margin: 0 auto 16px auto;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
 
-    .state-title {
-      font-size: 1.15rem;
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px 16px;
+    }
+
+    .video-card {
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: var(--bg-surface);
+      border: 1px solid transparent;
+      transition: transform 0.18s, border-color 0.18s, background-color 0.18s;
+    }
+
+    .video-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-color);
+      background-color: var(--bg-surface-hover);
+    }
+
+    .thumbnail-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 */
+      background-color: #000;
+    }
+
+    .thumbnail-wrapper img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-info {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .video-title {
+      font-size: 0.95rem;
       font-weight: 600;
-      margin-bottom: 0.45rem;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      color: var(--text-main);
     }
 
-    .state-desc {
-      font-size: 0.88rem;
-      color: var(--text-secondary);
-      max-width: 480px;
-      line-height: 1.45;
+    .video-channel {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
     }
 
-    /* Error and Retry Box */
-    .error-card {
-      background: rgba(220, 38, 38, 0.08);
-      border: 1px solid rgba(220, 38, 38, 0.3);
-      padding: 2rem;
-      border-radius: 12px;
-      max-width: 520px;
-    }
-
-    .error-icon {
-      width: 42px;
-      height: 42px;
-      margin: 0 auto 1rem;
-      color: #ef4444;
-    }
-
-    .retry-btn {
-      margin-top: 1.25rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      padding: 0.6rem 1.4rem;
-      border-radius: 9999px;
-      font-size: 0.88rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .retry-btn:hover {
-      background: #272727;
-      border-color: #555555;
-    }
-
-    .hidden {
-      display: none !important;
+    @media (max-width: 600px) {
+      header {
+        padding: 10px 14px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .brand {
+        justify-content: center;
+      }
+      main {
+        padding: 14px;
+      }
+      .key {
+        height: 38px;
+        font-size: 0.9rem;
+      }
     }
   </style>
 </head>
-
 <body>
 
-  <!-- Top Sticky Header -->
   <header>
-    <div class="header-inner">
-      <!-- App Brand -->
-      <div class="brand" onclick="handleBrandClick()">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-        </div>
-        <span>Sound<span class="brand-accent">Finder</span></span>
-      </div>
+    <a href="#" class="brand" onclick="location.reload(); return false;">
+      <span class="brand-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+        </svg>
+      </span>
+      YTAuto
+    </a>
 
-      <!-- Search Input Form -->
-      <form class="search-form" id="search-form" onsubmit="event.preventDefault(); onFormSubmit();">
-        <div class="search-input-wrapper">
-          <input 
-            type="text" 
-            id="search-input" 
-            class="search-input" 
-            placeholder="Pesquisar no YouTube..." 
-            autocomplete="off" 
-            autocapitalize="none"
-            spellcheck="false"
-          />
-          <button 
-            type="button" 
-            id="clear-btn" 
-            class="clear-btn" 
-            onclick="clearSearchInput()" 
-            aria-label="Limpar texto"
-          >
-            &#x2715;
-          </button>
-        </div>
-        <button type="submit" class="search-submit-btn" aria-label="Pesquisar">
-          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    <div class="search-wrapper" id="search-wrapper">
+      <form class="search-box" id="search-form" onsubmit="event.preventDefault(); triggerSearch();">
+        <input 
+          type="text" 
+          id="search-input" 
+          class="search-input" 
+          placeholder="Pesquisar no YouTube..." 
+          autocomplete="off"
+          inputmode="none"
+          readonly
+        />
+        <button type="submit" class="search-btn" title="Buscar" id="search-submit-btn">
+          <svg viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
           </svg>
         </button>
       </form>
 
-      <!-- Badge Indication -->
-      <div class="badge-info">
-        <span class="badge-dot"></span>
-        <span>Abre direto no YouTube</span>
+      <!-- Teclado Virtual Dropdown -->
+      <div class="virtual-keyboard" id="virtual-keyboard">
+        <div class="keyboard-row">
+          <button type="button" class="key" data-key="1">1</button>
+          <button type="button" class="key" data-key="2">2</button>
+          <button type="button" class="key" data-key="3">3</button>
+          <button type="button" class="key" data-key="4">4</button>
+          <button type="button" class="key" data-key="5">5</button>
+          <button type="button" class="key" data-key="6">6</button>
+          <button type="button" class="key" data-key="7">7</button>
+          <button type="button" class="key" data-key="8">8</button>
+          <button type="button" class="key" data-key="9">9</button>
+          <button type="button" class="key" data-key="0">0</button>
+        </div>
+        <div class="keyboard-row">
+          <button type="button" class="key" data-key="q">q</button>
+          <button type="button" class="key" data-key="w">w</button>
+          <button type="button" class="key" data-key="e">e</button>
+          <button type="button" class="key" data-key="r">r</button>
+          <button type="button" class="key" data-key="t">t</button>
+          <button type="button" class="key" data-key="y">y</button>
+          <button type="button" class="key" data-key="u">u</button>
+          <button type="button" class="key" data-key="i">i</button>
+          <button type="button" class="key" data-key="o">o</button>
+          <button type="button" class="key" data-key="p">p</button>
+        </div>
+        <div class="keyboard-row">
+          <button type="button" class="key" data-key="a">a</button>
+          <button type="button" class="key" data-key="s">s</button>
+          <button type="button" class="key" data-key="d">d</button>
+          <button type="button" class="key" data-key="f">f</button>
+          <button type="button" class="key" data-key="g">g</button>
+          <button type="button" class="key" data-key="h">h</button>
+          <button type="button" class="key" data-key="j">j</button>
+          <button type="button" class="key" data-key="k">k</button>
+          <button type="button" class="key" data-key="l">l</button>
+          <button type="button" class="key" data-key="ç">ç</button>
+        </div>
+        <div class="keyboard-row">
+          <button type="button" class="key key-special key-shift" id="key-shift">Shift</button>
+          <button type="button" class="key" data-key="z">z</button>
+          <button type="button" class="key" data-key="x">x</button>
+          <button type="button" class="key" data-key="c">c</button>
+          <button type="button" class="key" data-key="v">v</button>
+          <button type="button" class="key" data-key="b">b</button>
+          <button type="button" class="key" data-key="n">n</button>
+          <button type="button" class="key" data-key="m">m</button>
+          <button type="button" class="key key-special key-backspace" id="key-backspace">&#x232B;</button>
+        </div>
+        <div class="keyboard-row">
+          <button type="button" class="key key-special key-clear" id="key-clear">Limpar</button>
+          <button type="button" class="key key-space" data-key=" ">Espaço</button>
+          <button type="button" class="key key-search" id="key-search">Pesquisar</button>
+        </div>
       </div>
     </div>
   </header>
 
-  <!-- Main Body Content -->
   <main>
-    <!-- Dynamic Status Header -->
-    <div id="status-bar" class="status-bar hidden">
-      <div>
-        <span class="status-title">Resultados da pesquisa:</span>
-        <span id="status-query" class="status-query"></span>
-      </div>
-      <span id="status-count"></span>
-    </div>
-
-    <!-- Loading State -->
-    <div id="loading-state" class="state-container hidden">
-      <div class="spinner"></div>
-      <p class="state-title">Buscando músicas e vídeos...</p>
-      <p class="state-desc">Consultando a YouTube Data API v3.</p>
-    </div>
-
-    <!-- Error State -->
-    <div id="error-state" class="state-container hidden">
-      <div class="error-card">
-        <svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-        </svg>
-        <h3 class="state-title" id="error-title">Falha na Busca</h3>
-        <p class="state-desc" id="error-desc">Não foi possível carregar os vídeos.</p>
-        <button class="retry-btn" onclick="retryLastSearch()">Tentar Novamente</button>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div id="empty-state" class="state-container hidden">
-      <h3 class="state-title">Nenhum resultado encontrado</h3>
-      <p class="state-desc" id="empty-desc">Tente utilizar outros termos na barra de pesquisa.</p>
-    </div>
-
-    <!-- Video Results Grid -->
-    <div id="video-grid" class="video-grid hidden"></div>
+    <div id="status-container"></div>
+    <div class="video-grid" id="video-grid"></div>
   </main>
 
   <script>
-    // Configuration
     const API_KEY = "AIzaSyConJE6iVJJ3pz-ag1xxJZfAN2VG0aOz40";
-    const API_SEARCH_ENDPOINT = "https://www.googleapis.com/youtube/v3/search";
-    const INITIAL_SEARCH_QUERY = "melhores musicas 2026";
+    const INITIAL_SEARCH = "melhores musicas 2026";
 
-    // DOM Elements
     const searchInput = document.getElementById("search-input");
-    const clearBtn = document.getElementById("clear-btn");
+    const virtualKeyboard = document.getElementById("virtual-keyboard");
+    const searchWrapper = document.getElementById("search-wrapper");
+    const shiftBtn = document.getElementById("key-shift");
+    const backspaceBtn = document.getElementById("key-backspace");
+    const clearBtn = document.getElementById("key-clear");
+    const searchKeyBtn = document.getElementById("key-search");
     const videoGrid = document.getElementById("video-grid");
-    const statusBar = document.getElementById("status-bar");
-    const statusQuery = document.getElementById("status-query");
-    const statusCount = document.getElementById("status-count");
-    const loadingState = document.getElementById("loading-state");
-    const errorState = document.getElementById("error-state");
-    const errorTitle = document.getElementById("error-title");
-    const errorDesc = document.getElementById("error-desc");
-    const emptyState = document.getElementById("empty-state");
-    const emptyDesc = document.getElementById("empty-desc");
+    const statusContainer = document.getElementById("status-container");
 
-    let lastExecutedQuery = INITIAL_SEARCH_QUERY;
+    let isShiftActive = false;
 
-    // Helper: Escape HTML to avoid injection
-    function escapeHtml(text) {
-      if (!text) return "";
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    // Abrir o teclado virtual ao clicar/tocar no input
+    function openKeyboard() {
+      virtualKeyboard.classList.add("active");
     }
 
-    // Helper: Format ISO Publication Date
-    function formatDate(dateStr) {
-      if (!dateStr) return "";
-      try {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric"
-        });
-      } catch (e) {
-        return "";
-      }
+    function closeKeyboard() {
+      virtualKeyboard.classList.remove("active");
     }
 
-    // UI Input Management
-    searchInput.addEventListener("input", () => {
-      clearBtn.style.display = searchInput.value.trim().length > 0 ? "block" : "none";
+    searchInput.addEventListener("click", openKeyboard);
+    searchInput.addEventListener("focus", openKeyboard);
+    searchInput.addEventListener("touchstart", (e) => {
+      openKeyboard();
     });
 
-    function clearSearchInput() {
-      searchInput.value = "";
-      clearBtn.style.display = "none";
-      searchInput.focus();
-    }
+    // Fechar ao clicar fora
+    document.addEventListener("click", (e) => {
+      if (!searchWrapper.contains(e.target)) {
+        closeKeyboard();
+      }
+    });
 
-    function handleBrandClick() {
-      clearSearchInput();
-      fetchYouTubeVideos(INITIAL_SEARCH_QUERY, "Destaques: Melhores Músicas 2026");
-    }
-
-    function onFormSubmit() {
-      const query = searchInput.value.trim();
-      if (!query) return;
-      fetchYouTubeVideos(query, `"${query}"`);
-    }
-
-    function retryLastSearch() {
-      fetchYouTubeVideos(lastExecutedQuery, `"${lastExecutedQuery}"`);
-    }
-
-    async function fetchYouTubeVideos(query, displayLabel) {
-      lastExecutedQuery = query;
-
-      // Update UI to Loading
-      videoGrid.classList.add("hidden");
-      statusBar.classList.add("hidden");
-      emptyState.classList.add("hidden");
-      errorState.classList.add("hidden");
-      loadingState.classList.remove("hidden");
-
-      try {
-        const params = new URLSearchParams({
-          part: "snippet",
-          type: "video",
-          maxResults: "16",
-          q: query,
-          key: API_KEY
-        });
-
-        const response = await fetch(`${API_SEARCH_ENDPOINT}?${params.toString()}`);
-        const data = await response.json();
-
-        if (!response.ok) {
-          const apiMsg = data && data.error && data.error.message ? data.error.message : `Status HTTP: ${response.status}`;
-          throw new Error(apiMsg);
+    // Digitação pelas teclas
+    document.querySelectorAll(".key[data-key]").forEach(keyEl => {
+      keyEl.addEventListener("click", (e) => {
+        e.preventDefault();
+        let char = keyEl.getAttribute("data-key");
+        if (isShiftActive && char.length === 1) {
+          char = char.toUpperCase();
         }
+        searchInput.value += char;
+      });
+    });
 
-        renderVideos(data.items || [], displayLabel || query);
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        loadingState.classList.add("hidden");
+    // Shift / Caps
+    shiftBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      isShiftActive = !isShiftActive;
+      shiftBtn.style.backgroundColor = isShiftActive ? "var(--accent)" : "";
+      document.querySelectorAll(".key[data-key]").forEach(keyEl => {
+        const char = keyEl.getAttribute("data-key");
+        if (char !== " ") {
+          keyEl.textContent = isShiftActive ? char.toUpperCase() : char.toLowerCase();
+        }
+      });
+    });
+
+    // Apagar (Backspace)
+    backspaceBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      searchInput.value = searchInput.value.slice(0, -1);
+    });
+
+    // Limpar tudo
+    clearBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      searchInput.value = "";
+    });
+
+    // Executar busca
+    function triggerSearch() {
+      closeKeyboard();
+      const query = searchInput.value.trim();
+      if (query) {
+        fetchVideos(query);
       }
     }
 
-    function renderVideos(videos, displayLabel) {
+    searchKeyBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      triggerSearch();
+    });
+
+    // Busca na API do YouTube
+    async function fetchVideos(query) {
+      statusContainer.innerHTML = '<div class="spinner"></div><div class="status-msg">Carregando vídeos...</div>';
       videoGrid.innerHTML = "";
 
-      if (!videos || videos.length === 0) {
-        emptyDesc.textContent = `Nenhum vídeo retornado para a busca solicitada. Tente novos termos.`;
-        emptyState.classList.remove("hidden");
-        return;
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=16&q=${encodeURIComponent(query)}&key=${API_KEY}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.error) {
+          statusContainer.innerHTML = `<div class="status-msg" style="color: #ff6b6b;">Erro: ${data.error.message}</div>`;
+          return;
+        }
+
+        if (!data.items || data.items.length === 0) {
+          statusContainer.innerHTML = '<div class="status-msg">Nenhum resultado encontrado.</div>';
+          return;
+        }
+
+        statusContainer.innerHTML = "";
+        renderVideos(data.items);
+      } catch (err) {
+        statusContainer.innerHTML = '<div class="status-msg" style="color: #ff6b6b;">Erro de rede ao conectar à API do YouTube.</div>';
       }
+    }
 
-      // Update Status Header
-      statusQuery.textContent = displayLabel;
-      statusCount.textContent = `${videos.length} vídeos`;
-      statusBar.classList.remove("hidden");
-
-      videos.forEach((item) => {
+    function renderVideos(items) {
+      videoGrid.innerHTML = "";
+      items.forEach(item => {
         const videoId = item.id.videoId;
-        if (!videoId) return;
+        const { title, channelTitle, thumbnails } = item.snippet;
+        const thumbUrl = thumbnails.medium ? thumbnails.medium.url : thumbnails.default.url;
 
-        const snippet = item.snippet;
-        const title = snippet.title;
-        const channel = snippet.channelTitle;
-        const published = formatDate(snippet.publishedAt);
-        const thumbUrl = snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url;
-        const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
-
-        // Create direct external card link
         const card = document.createElement("a");
-        card.href = youtubeUrl;
+        card.className = "video-card";
+        card.href = `https://www.youtube.com/watch?v=${videoId}`;
         card.target = "_blank";
         card.rel = "noopener noreferrer";
-        card.className = "video-card";
-        card.setAttribute("aria-label", `Assistir ${escapeHtml(title)} no YouTube`);
 
         card.innerHTML = `
-          <div class="thumbnail-container">
-            <img 
-              class="thumbnail-img" 
-              src="${thumbUrl}" 
-              alt="${escapeHtml(title)}"
-              loading="lazy"
-              onerror="this.src='https://placehold.co/480x360/1a1a1a/aaaaaa?text=Sem+Thumbnail'"
-            />
-            <div class="card-play-overlay">
-              <div class="play-icon-badge">
-                <svg viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </div>
-            </div>
-            <div class="external-badge">
-              <span>YouTube</span>
-              <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-              </svg>
-            </div>
+          <div class="thumbnail-wrapper">
+            <img src="${thumbUrl}" alt="${title}" loading="lazy">
           </div>
-          <div class="card-content">
-            <div>
-              <h3 class="video-title" title="${escapeHtml(title)}">${escapeHtml(title)}</h3>
-              <p class="channel-title" title="${escapeHtml(channel)}">${escapeHtml(channel)}</p>
-            </div>
-            <div class="card-footer">
-              <span>Data de publicação</span>
-              <span>${published}</span>
-            </div>
+          <div class="video-info">
+            <div class="video-title" title="${title}">${title}</div>
+            <div class="video-channel">${channelTitle}</div>
           </div>
         `;
 
         videoGrid.appendChild(card);
       });
-
-      videoGrid.classList.remove("hidden");
     }
 
-    // Display error message
-    function showError(message) {
-      errorTitle.textContent = "Erro na Consulta ao YouTube";
-      errorDesc.textContent = message || "Ocorreu uma falha ao tentar comunicar-se com a API.";
-      errorState.classList.remove("hidden");
-    }
-
+    // Ao iniciar: carrega as músicas iniciais mantendo o input limpo
     window.addEventListener("DOMContentLoaded", () => {
-      // 1. Keep search input strictly empty
-      searchInput.value = "";
-      clearBtn.style.display = "none";
-
-      // 2. Automatically focus the search input for immediate user typing
-      searchInput.focus();
-
-      // 3. Automatically perform initial search in background and render videos below
-      fetchYouTubeVideos(INITIAL_SEARCH_QUERY, "Melhores Músicas 2026");
+      fetchVideos(INITIAL_SEARCH);
     });
   </script>
 </body>
