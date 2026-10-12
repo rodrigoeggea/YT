@@ -24,6 +24,7 @@
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
     body {
@@ -58,6 +59,7 @@
       color: var(--text-main);
       text-decoration: none;
       flex-shrink: 0;
+      cursor: pointer;
     }
 
     .brand-icon {
@@ -73,6 +75,7 @@
       margin: 0 auto;
     }
 
+    /* Container de busca customizado - sem tags <input> para bloquear teclado do SO */
     .search-box {
       display: flex;
       align-items: center;
@@ -81,26 +84,59 @@
       border-radius: 40px;
       overflow: hidden;
       transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
     }
 
+    .search-box.is-active,
     .search-box:focus-within {
       border-color: #3ea6ff;
       box-shadow: 0 0 0 1px #3ea6ff;
     }
 
-    .search-input {
+    .search-display {
       flex: 1;
       background: transparent;
-      border: none;
-      outline: none;
       padding: 10px 18px;
       font-size: 1rem;
       color: var(--text-main);
-      cursor: pointer;
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
     }
 
-    .search-input::placeholder {
+    .search-display::-webkit-scrollbar {
+      display: none;
+    }
+
+    .search-display .placeholder {
       color: var(--text-muted);
+    }
+
+    .search-display .text-content {
+      color: var(--text-main);
+    }
+
+    /* Cursor piscante virtual */
+    .virtual-cursor {
+      display: none;
+      width: 2px;
+      height: 1.15rem;
+      background-color: #3ea6ff;
+      margin-left: 2px;
+      animation: blink 1s infinite;
+      vertical-align: middle;
+    }
+
+    .search-box.is-active .virtual-cursor {
+      display: inline-block;
+    }
+
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
     }
 
     .search-btn {
@@ -114,6 +150,7 @@
       align-items: center;
       justify-content: center;
       transition: background-color 0.2s;
+      height: 44px;
     }
 
     .search-btn:hover {
@@ -126,7 +163,6 @@
       fill: currentColor;
     }
 
-    /* Teclado Virtual Dropdown */
     .virtual-keyboard {
       position: absolute;
       top: calc(100% + 8px);
@@ -135,7 +171,7 @@
       background: #181818;
       border: 1px solid var(--border-color);
       border-radius: 14px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
       padding: 12px;
       display: none;
       flex-direction: column;
@@ -178,7 +214,6 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      user-select: none;
       transition: background-color 0.1s, transform 0.05s;
     }
 
@@ -261,6 +296,7 @@
       background-color: var(--bg-surface);
       border: 1px solid transparent;
       transition: transform 0.18s, border-color 0.18s, background-color 0.18s;
+      user-select: none;
     }
 
     .video-card:hover {
@@ -272,7 +308,7 @@
     .thumbnail-wrapper {
       position: relative;
       width: 100%;
-      padding-top: 56.25%; /* 16:9 */
+      padding-top: 56.25%; /* 16:9 aspect ratio */
       background-color: #000;
     }
 
@@ -310,21 +346,49 @@
       margin-top: 2px;
     }
 
+    /* Adaptação Mobile e Telas de Veículos / Android Auto */
     @media (max-width: 600px) {
       header {
-        padding: 10px 14px;
+        padding: 10px 12px;
         flex-direction: column;
         align-items: stretch;
       }
+
       .brand {
         justify-content: center;
       }
+
+      .search-wrapper {
+        position: static;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .virtual-keyboard {
+        left: 0;
+        right: 0;
+        width: 100vw;
+        border-radius: 0 0 14px 14px;
+        border-left: none;
+        border-right: none;
+        padding: 8px 6px;
+      }
+
+      .keyboard-row {
+        gap: 3px;
+      }
+
+      .key {
+        height: 42px;
+        font-size: 0.92rem;
+      }
+
+      .key-special {
+        font-size: 0.78rem;
+      }
+
       main {
         padding: 14px;
-      }
-      .key {
-        height: 38px;
-        font-size: 0.9rem;
       }
     }
   </style>
@@ -342,24 +406,20 @@
     </a>
 
     <div class="search-wrapper" id="search-wrapper">
-      <form class="search-box" id="search-form" onsubmit="event.preventDefault(); triggerSearch();">
-        <input 
-          type="text" 
-          id="search-input" 
-          class="search-input" 
-          placeholder="Pesquisar no YouTube..." 
-          autocomplete="off"
-          inputmode="none"
-          readonly
-        />
-        <button type="submit" class="search-btn" title="Buscar" id="search-submit-btn">
+      <!-- Elemento visual não editável pelo SO para impedir qualquer teclado nativo -->
+      <div class="search-box" id="search-box">
+        <div class="search-display" id="search-display">
+          <span class="placeholder" id="search-placeholder">Pesquisar no YouTube...</span>
+          <span class="text-content" id="search-text"></span>
+          <span class="virtual-cursor" id="virtual-cursor"></span>
+        </div>
+        <button type="button" class="search-btn" title="Buscar" id="search-submit-btn">
           <svg viewBox="0 0 24 24">
             <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
           </svg>
         </button>
-      </form>
+      </div>
 
-      <!-- Teclado Virtual Dropdown -->
       <div class="virtual-keyboard" id="virtual-keyboard">
         <div class="keyboard-row">
           <button type="button" class="key" data-key="1">1</button>
@@ -426,55 +486,85 @@
     const API_KEY = "AIzaSyConJE6iVJJ3pz-ag1xxJZfAN2VG0aOz40";
     const INITIAL_SEARCH = "melhores musicas 2026";
 
-    const searchInput = document.getElementById("search-input");
-    const virtualKeyboard = document.getElementById("virtual-keyboard");
+    // Elementos da interface
     const searchWrapper = document.getElementById("search-wrapper");
+    const searchBox = document.getElementById("search-box");
+    const searchDisplay = document.getElementById("search-display");
+    const searchPlaceholder = document.getElementById("search-placeholder");
+    const searchText = document.getElementById("search-text");
+    const searchSubmitBtn = document.getElementById("search-submit-btn");
+
+    const virtualKeyboard = document.getElementById("virtual-keyboard");
     const shiftBtn = document.getElementById("key-shift");
     const backspaceBtn = document.getElementById("key-backspace");
     const clearBtn = document.getElementById("key-clear");
     const searchKeyBtn = document.getElementById("key-search");
+
     const videoGrid = document.getElementById("video-grid");
     const statusContainer = document.getElementById("status-container");
 
+    let currentQuery = "";
     let isShiftActive = false;
 
-    // Abrir o teclado virtual ao clicar/tocar no input
+    // Atualiza a exibição visual do texto e placeholder
+    function updateDisplay() {
+      if (currentQuery.length === 0) {
+        searchPlaceholder.style.display = "inline";
+        searchText.textContent = "";
+      } else {
+        searchPlaceholder.style.display = "none";
+        searchText.textContent = currentQuery;
+      }
+      searchDisplay.scrollLeft = searchDisplay.scrollWidth;
+    }
+
+    // Controle de abertura e fechamento do teclado virtual
     function openKeyboard() {
       virtualKeyboard.classList.add("active");
+      searchBox.classList.add("is-active");
     }
 
     function closeKeyboard() {
       virtualKeyboard.classList.remove("active");
+      searchBox.classList.remove("is-active");
     }
 
-    searchInput.addEventListener("click", openKeyboard);
-    searchInput.addEventListener("focus", openKeyboard);
-    searchInput.addEventListener("touchstart", (e) => {
+    // Clique ou toque na caixa de texto abre apenas o teclado virtual
+    searchDisplay.addEventListener("click", (e) => {
+      e.stopPropagation();
       openKeyboard();
     });
 
-    // Fechar ao clicar fora
+    searchDisplay.addEventListener("touchstart", (e) => {
+      e.stopPropagation();
+      openKeyboard();
+    }, { passive: true });
+
+    // Fechar ao clicar fora do wrapper de busca
     document.addEventListener("click", (e) => {
       if (!searchWrapper.contains(e.target)) {
         closeKeyboard();
       }
     });
 
-    // Digitação pelas teclas
+    // Inserção de caracteres
     document.querySelectorAll(".key[data-key]").forEach(keyEl => {
       keyEl.addEventListener("click", (e) => {
         e.preventDefault();
+        e.stopPropagation();
         let char = keyEl.getAttribute("data-key");
         if (isShiftActive && char.length === 1) {
           char = char.toUpperCase();
         }
-        searchInput.value += char;
+        currentQuery += char;
+        updateDisplay();
       });
     });
 
-    // Shift / Caps
+    // Shift / Caps toggle
     shiftBtn.addEventListener("click", (e) => {
       e.preventDefault();
+      e.stopPropagation();
       isShiftActive = !isShiftActive;
       shiftBtn.style.backgroundColor = isShiftActive ? "var(--accent)" : "";
       document.querySelectorAll(".key[data-key]").forEach(keyEl => {
@@ -488,19 +578,25 @@
     // Apagar (Backspace)
     backspaceBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      searchInput.value = searchInput.value.slice(0, -1);
+      e.stopPropagation();
+      if (currentQuery.length > 0) {
+        currentQuery = currentQuery.slice(0, -1);
+        updateDisplay();
+      }
     });
 
     // Limpar tudo
     clearBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      searchInput.value = "";
+      e.stopPropagation();
+      currentQuery = "";
+      updateDisplay();
     });
 
     // Executar busca
     function triggerSearch() {
       closeKeyboard();
-      const query = searchInput.value.trim();
+      const query = currentQuery.trim();
       if (query) {
         fetchVideos(query);
       }
@@ -508,10 +604,25 @@
 
     searchKeyBtn.addEventListener("click", (e) => {
       e.preventDefault();
+      e.stopPropagation();
       triggerSearch();
     });
 
-    // Busca na API do YouTube
+    searchSubmitBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerSearch();
+    });
+
+    // Suporte para tecla Enter física (se conectado a teclado físico ou volante)
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        triggerSearch();
+      }
+    });
+
+    // Requisição à YouTube Data API v3
     async function fetchVideos(query) {
       statusContainer.innerHTML = '<div class="spinner"></div><div class="status-msg">Carregando vídeos...</div>';
       videoGrid.innerHTML = "";
@@ -539,6 +650,7 @@
       }
     }
 
+    // Renderização dos cards de vídeo
     function renderVideos(items) {
       videoGrid.innerHTML = "";
       items.forEach(item => {
@@ -566,7 +678,7 @@
       });
     }
 
-    // Ao iniciar: carrega as músicas iniciais mantendo o input limpo
+    // Inicialização com a busca padrão
     window.addEventListener("DOMContentLoaded", () => {
       fetchVideos(INITIAL_SEARCH);
     });
