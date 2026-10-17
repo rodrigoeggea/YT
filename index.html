@@ -1,672 +1,328 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YTAuto</title>
-  <style>
-    :root {
-      --bg-main: #0f0f0f;
-      --bg-surface: #1f1f1f;
-      --bg-surface-hover: #272727;
-      --border-color: #303030;
-      --text-main: #f1f1f1;
-      --text-muted: #aaaaaa;
-      --accent: #ff0000;
-      --accent-hover: #cc0000;
-      --key-bg: #2b2b2b;
-      --key-hover: #3d3d3d;
-      --key-active: #4a4a4a;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg-main);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background-color: var(--bg-main);
-      border-bottom: 1px solid var(--border-color);
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      color: var(--text-main);
-      text-decoration: none;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-
-    .brand-icon {
-      color: var(--accent);
-      display: flex;
-      align-items: center;
-    }
-
-    .search-wrapper {
-      position: relative;
-      flex: 1;
-      max-width: 640px;
-      margin: 0 auto;
-    }
-
-    /* Container de busca customizado - sem tags <input> para bloquear teclado do SO */
-    .search-box {
-      display: flex;
-      align-items: center;
-      background-color: #121212;
-      border: 1px solid var(--border-color);
-      border-radius: 40px;
-      overflow: hidden;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-    }
-
-    .search-box.is-active,
-    .search-box:focus-within {
-      border-color: #3ea6ff;
-      box-shadow: 0 0 0 1px #3ea6ff;
-    }
-
-    .search-display {
-      flex: 1;
-      background: transparent;
-      padding: 10px 18px;
-      font-size: 1rem;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      min-height: 44px;
-      overflow-x: auto;
-      white-space: nowrap;
-      scrollbar-width: none;
-    }
-
-    .search-display::-webkit-scrollbar {
-      display: none;
-    }
-
-    .search-display .placeholder {
-      color: var(--text-muted);
-    }
-
-    .search-display .text-content {
-      color: var(--text-main);
-    }
-
-    /* Cursor piscante virtual */
-    .virtual-cursor {
-      display: none;
-      width: 2px;
-      height: 1.15rem;
-      background-color: #3ea6ff;
-      margin-left: 2px;
-      animation: blink 1s infinite;
-      vertical-align: middle;
-    }
-
-    .search-box.is-active .virtual-cursor {
-      display: inline-block;
-    }
-
-    @keyframes blink {
-      0%, 49% { opacity: 1; }
-      50%, 100% { opacity: 0; }
-    }
-
-    .clear-btn {
-      background: var(--bg-surface);
-      border: none;
-      border-left: 1px solid var(--border-color);
-      color: var(--text-muted);
-      padding: 10px 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.2s, color 0.2s;
-      height: 44px;
-    }
-
-    .clear-btn:hover {
-      background-color: var(--bg-surface-hover);
-      color: var(--text-main);
-    }
-
-    .clear-btn svg {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
-    }
-
-    .virtual-keyboard {
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      right: 0;
-      background: #181818;
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
-      padding: 12px;
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-      z-index: 200;
-      animation: fadeInDown 0.18s ease-out;
-    }
-
-    .virtual-keyboard.active {
-      display: flex;
-    }
-
-    @keyframes fadeInDown {
-      from {
-        opacity: 0;
-        transform: translateY(-8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .keyboard-row {
-      display: flex;
-      gap: 5px;
-      justify-content: center;
-    }
-
-    .key {
-      flex: 1;
-      height: 42px;
-      background-color: var(--key-bg);
-      color: var(--text-main);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background-color 0.1s, transform 0.05s;
-    }
-
-    .key:hover {
-      background-color: var(--key-hover);
-    }
-
-    .key:active {
-      background-color: var(--key-active);
-      transform: scale(0.97);
-    }
-
-    .key-special {
-      background-color: #222222;
-      color: #dddddd;
-      font-size: 0.85rem;
-    }
-
-    .key-space {
-      flex: 3.5;
-    }
-
-    .key-backspace, .key-shift, .key-clear {
-      flex: 1.4;
-    }
-
-    .key-search {
-      flex: 1.8;
-      background-color: var(--accent);
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .key-search:hover {
-      background-color: var(--accent-hover);
-    }
-
-    main {
-      flex: 1;
-      padding: 24px;
-      max-width: 1440px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    .status-msg {
-      text-align: center;
-      padding: 40px 16px;
-      color: var(--text-muted);
-      font-size: 1.1rem;
-    }
-
-    .spinner {
-      width: 38px;
-      height: 38px;
-      border: 3px solid rgba(255, 255, 255, 0.15);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px auto;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .video-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 20px 16px;
-    }
-
-    .video-card {
-      text-decoration: none;
-      color: inherit;
-      display: flex;
-      flex-direction: column;
-      border-radius: 10px;
-      overflow: hidden;
-      background-color: var(--bg-surface);
-      border: 1px solid transparent;
-      transition: transform 0.18s, border-color 0.18s, background-color 0.18s;
-      user-select: none;
-    }
-
-    .video-card:hover {
-      transform: translateY(-3px);
-      border-color: var(--border-color);
-      background-color: var(--bg-surface-hover);
-    }
-
-    .thumbnail-wrapper {
-      position: relative;
-      width: 100%;
-      padding-top: 56.25%; /* 16:9 aspect ratio */
-      background-color: #000;
-    }
-
-    .thumbnail-wrapper img {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .video-info {
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex: 1;
-    }
-
-    .video-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      line-height: 1.35;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      color: var(--text-main);
-    }
-
-    .video-channel {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* Adaptação Mobile e Telas de Veículos / Android Auto */
-    @media (max-width: 600px) {
-      header {
-        padding: 10px 12px;
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .brand {
-        justify-content: center;
-      }
-
-      .search-wrapper {
-        position: static;
-        width: 100%;
-        max-width: 100%;
-      }
-
-      .virtual-keyboard {
-        left: 0;
-        right: 0;
-        width: 100vw;
-        border-radius: 0 0 14px 14px;
-        border-left: none;
-        border-right: none;
-        padding: 8px 6px;
-      }
-
-      .keyboard-row {
-        gap: 3px;
-      }
-
-      .key {
-        height: 42px;
-        font-size: 0.92rem;
-      }
-
-      .key-special {
-        font-size: 0.78rem;
-      }
-
-      main {
-        padding: 14px;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <header>
-    <a href="#" class="brand" onclick="location.reload(); return false;">
-      <span class="brand-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-        </svg>
-      </span>
-      YTAuto
-    </a>
-
-    <div class="search-wrapper" id="search-wrapper">
-      <!-- Elemento visual não editável pelo SO para impedir qualquer teclado nativo -->
-      <div class="search-box" id="search-box">
-        <div class="search-display" id="search-display">
-          <span class="placeholder" id="search-placeholder">Pesquisar no YouTube...</span>
-          <span class="text-content" id="search-text"></span>
-          <span class="virtual-cursor" id="virtual-cursor"></span>
-        </div>
-        <button type="button" class="clear-btn" title="Fechar Teclado" id="clear-search-btn">
-          <svg viewBox="0 0 24 24">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YTAuto</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <a
+        href="#"
+        class="brand"
+        onclick="
+          location.reload();
+          return false;
+        "
+      >
+        <span class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"
+            />
           </svg>
-        </button>
+        </span>
+        YTAuto
+      </a>
+
+      <div class="search-wrapper" id="search-wrapper">
+        <!-- Elemento visual não editável pelo SO para impedir qualquer teclado nativo -->
+        <div class="search-box" id="search-box">
+          <div class="search-display" id="search-display">
+            <span class="placeholder" id="search-placeholder"
+              >Pesquisar no YouTube...</span
+            >
+            <span class="text-content" id="search-text"></span>
+            <span class="virtual-cursor" id="virtual-cursor"></span>
+          </div>
+          <button
+            type="button"
+            class="clear-btn"
+            title="Fechar Teclado"
+            id="clear-search-btn"
+          >
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="virtual-keyboard" id="virtual-keyboard">
+          <div class="keyboard-row">
+            <button type="button" class="key" data-key="1">1</button>
+            <button type="button" class="key" data-key="2">2</button>
+            <button type="button" class="key" data-key="3">3</button>
+            <button type="button" class="key" data-key="4">4</button>
+            <button type="button" class="key" data-key="5">5</button>
+            <button type="button" class="key" data-key="6">6</button>
+            <button type="button" class="key" data-key="7">7</button>
+            <button type="button" class="key" data-key="8">8</button>
+            <button type="button" class="key" data-key="9">9</button>
+            <button type="button" class="key" data-key="0">0</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key" data-key="q">q</button>
+            <button type="button" class="key" data-key="w">w</button>
+            <button type="button" class="key" data-key="e">e</button>
+            <button type="button" class="key" data-key="r">r</button>
+            <button type="button" class="key" data-key="t">t</button>
+            <button type="button" class="key" data-key="y">y</button>
+            <button type="button" class="key" data-key="u">u</button>
+            <button type="button" class="key" data-key="i">i</button>
+            <button type="button" class="key" data-key="o">o</button>
+            <button type="button" class="key" data-key="p">p</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key" data-key="a">a</button>
+            <button type="button" class="key" data-key="s">s</button>
+            <button type="button" class="key" data-key="d">d</button>
+            <button type="button" class="key" data-key="f">f</button>
+            <button type="button" class="key" data-key="g">g</button>
+            <button type="button" class="key" data-key="h">h</button>
+            <button type="button" class="key" data-key="j">j</button>
+            <button type="button" class="key" data-key="k">k</button>
+            <button type="button" class="key" data-key="l">l</button>
+            <button type="button" class="key" data-key="ç">ç</button>
+          </div>
+          <div class="keyboard-row">
+            <button
+              type="button"
+              class="key key-special key-shift"
+              id="key-shift"
+            >
+              Shift
+            </button>
+            <button type="button" class="key" data-key="z">z</button>
+            <button type="button" class="key" data-key="x">x</button>
+            <button type="button" class="key" data-key="c">c</button>
+            <button type="button" class="key" data-key="v">v</button>
+            <button type="button" class="key" data-key="b">b</button>
+            <button type="button" class="key" data-key="n">n</button>
+            <button type="button" class="key" data-key="m">m</button>
+            <button
+              type="button"
+              class="key key-special key-backspace"
+              id="key-backspace"
+            >
+              &#x232B;
+            </button>
+          </div>
+          <div class="keyboard-row">
+            <button
+              type="button"
+              class="key key-special key-clear"
+              id="key-clear"
+            >
+              Limpar
+            </button>
+            <button type="button" class="key key-space" data-key=" ">
+              Espaço
+            </button>
+            <button type="button" class="key key-search" id="key-search">
+              Pesquisar
+            </button>
+          </div>
+        </div>
       </div>
+    </header>
 
-      <div class="virtual-keyboard" id="virtual-keyboard">
-        <div class="keyboard-row">
-          <button type="button" class="key" data-key="1">1</button>
-          <button type="button" class="key" data-key="2">2</button>
-          <button type="button" class="key" data-key="3">3</button>
-          <button type="button" class="key" data-key="4">4</button>
-          <button type="button" class="key" data-key="5">5</button>
-          <button type="button" class="key" data-key="6">6</button>
-          <button type="button" class="key" data-key="7">7</button>
-          <button type="button" class="key" data-key="8">8</button>
-          <button type="button" class="key" data-key="9">9</button>
-          <button type="button" class="key" data-key="0">0</button>
-        </div>
-        <div class="keyboard-row">
-          <button type="button" class="key" data-key="q">q</button>
-          <button type="button" class="key" data-key="w">w</button>
-          <button type="button" class="key" data-key="e">e</button>
-          <button type="button" class="key" data-key="r">r</button>
-          <button type="button" class="key" data-key="t">t</button>
-          <button type="button" class="key" data-key="y">y</button>
-          <button type="button" class="key" data-key="u">u</button>
-          <button type="button" class="key" data-key="i">i</button>
-          <button type="button" class="key" data-key="o">o</button>
-          <button type="button" class="key" data-key="p">p</button>
-        </div>
-        <div class="keyboard-row">
-          <button type="button" class="key" data-key="a">a</button>
-          <button type="button" class="key" data-key="s">s</button>
-          <button type="button" class="key" data-key="d">d</button>
-          <button type="button" class="key" data-key="f">f</button>
-          <button type="button" class="key" data-key="g">g</button>
-          <button type="button" class="key" data-key="h">h</button>
-          <button type="button" class="key" data-key="j">j</button>
-          <button type="button" class="key" data-key="k">k</button>
-          <button type="button" class="key" data-key="l">l</button>
-          <button type="button" class="key" data-key="ç">ç</button>
-        </div>
-        <div class="keyboard-row">
-          <button type="button" class="key key-special key-shift" id="key-shift">Shift</button>
-          <button type="button" class="key" data-key="z">z</button>
-          <button type="button" class="key" data-key="x">x</button>
-          <button type="button" class="key" data-key="c">c</button>
-          <button type="button" class="key" data-key="v">v</button>
-          <button type="button" class="key" data-key="b">b</button>
-          <button type="button" class="key" data-key="n">n</button>
-          <button type="button" class="key" data-key="m">m</button>
-          <button type="button" class="key key-special key-backspace" id="key-backspace">&#x232B;</button>
-        </div>
-        <div class="keyboard-row">
-          <button type="button" class="key key-special key-clear" id="key-clear">Limpar</button>
-          <button type="button" class="key key-space" data-key=" ">Espaço</button>
-          <button type="button" class="key key-search" id="key-search">Pesquisar</button>
-        </div>
-      </div>
-    </div>
-  </header>
+    <main>
+      <div id="status-container"></div>
+      <div class="video-grid" id="video-grid"></div>
+    </main>
 
-  <main>
-    <div id="status-container"></div>
-    <div class="video-grid" id="video-grid"></div>
-  </main>
+    <script>
+      const API_KEY = "AIzaSyConJE6iVJJ3pz-ag1xxJZfAN2VG0aOz40";
+      const INITIAL_SEARCH = "melhores musicas 2026";
 
-  <script>
-    const API_KEY = "AIzaSyConJE6iVJJ3pz-ag1xxJZfAN2VG0aOz40";
-    const INITIAL_SEARCH = "melhores musicas 2026";
+      // Elementos da interface
+      const searchWrapper = document.getElementById("search-wrapper");
+      const searchBox = document.getElementById("search-box");
+      const searchDisplay = document.getElementById("search-display");
+      const searchPlaceholder = document.getElementById("search-placeholder");
+      const searchText = document.getElementById("search-text");
+      const clearSearchBtn = document.getElementById("clear-search-btn");
 
-    // Elementos da interface
-    const searchWrapper = document.getElementById("search-wrapper");
-    const searchBox = document.getElementById("search-box");
-    const searchDisplay = document.getElementById("search-display");
-    const searchPlaceholder = document.getElementById("search-placeholder");
-    const searchText = document.getElementById("search-text");
-    const clearSearchBtn = document.getElementById("clear-search-btn");
+      const virtualKeyboard = document.getElementById("virtual-keyboard");
+      const shiftBtn = document.getElementById("key-shift");
+      const backspaceBtn = document.getElementById("key-backspace");
+      const clearBtn = document.getElementById("key-clear");
+      const searchKeyBtn = document.getElementById("key-search");
 
-    const virtualKeyboard = document.getElementById("virtual-keyboard");
-    const shiftBtn = document.getElementById("key-shift");
-    const backspaceBtn = document.getElementById("key-backspace");
-    const clearBtn = document.getElementById("key-clear");
-    const searchKeyBtn = document.getElementById("key-search");
+      const videoGrid = document.getElementById("video-grid");
+      const statusContainer = document.getElementById("status-container");
 
-    const videoGrid = document.getElementById("video-grid");
-    const statusContainer = document.getElementById("status-container");
+      let currentQuery = "";
+      let isShiftActive = false;
 
-    let currentQuery = "";
-    let isShiftActive = false;
-
-    // Atualiza a exibição visual do texto e placeholder
-    function updateDisplay() {
-      if (currentQuery.length === 0) {
-        searchPlaceholder.style.display = "inline";
-        searchText.textContent = "";
-      } else {
-        searchPlaceholder.style.display = "none";
-        searchText.textContent = currentQuery;
+      // Atualiza a exibição visual do texto e placeholder
+      function updateDisplay() {
+        if (currentQuery.length === 0) {
+          searchPlaceholder.style.display = "inline";
+          searchText.textContent = "";
+        } else {
+          searchPlaceholder.style.display = "none";
+          searchText.textContent = currentQuery;
+        }
+        searchDisplay.scrollLeft = searchDisplay.scrollWidth;
       }
-      searchDisplay.scrollLeft = searchDisplay.scrollWidth;
-    }
 
-    // Controle de abertura e fechamento do teclado virtual
-    function openKeyboard() {
-      virtualKeyboard.classList.add("active");
-      searchBox.classList.add("is-active");
-    }
-
-    function closeKeyboard() {
-      virtualKeyboard.classList.remove("active");
-      searchBox.classList.remove("is-active");
-    }
-
-    // Clique ou toque na caixa de texto abre apenas o teclado virtual
-    searchDisplay.addEventListener("click", (e) => {
-      e.stopPropagation();
-      openKeyboard();
-    });
-
-    searchDisplay.addEventListener("touchstart", (e) => {
-      e.stopPropagation();
-      openKeyboard();
-    }, { passive: true });
-
-    // Fechar ao clicar fora do wrapper de busca
-    document.addEventListener("click", (e) => {
-      if (!searchWrapper.contains(e.target)) {
-        closeKeyboard();
+      // Controle de abertura e fechamento do teclado virtual
+      function openKeyboard() {
+        virtualKeyboard.classList.add("active");
+        searchBox.classList.add("is-active");
       }
-    });
 
-    // Inserção de caracteres
-    document.querySelectorAll(".key[data-key]").forEach(keyEl => {
-      keyEl.addEventListener("click", (e) => {
+      function closeKeyboard() {
+        virtualKeyboard.classList.remove("active");
+        searchBox.classList.remove("is-active");
+      }
+
+      // Clique ou toque na caixa de texto abre apenas o teclado virtual
+      searchDisplay.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openKeyboard();
+      });
+
+      searchDisplay.addEventListener(
+        "touchstart",
+        (e) => {
+          e.stopPropagation();
+          openKeyboard();
+        },
+        { passive: true },
+      );
+
+      // Fechar ao clicar fora do wrapper de busca
+      document.addEventListener("click", (e) => {
+        if (!searchWrapper.contains(e.target)) {
+          closeKeyboard();
+        }
+      });
+
+      // Inserção de caracteres
+      document.querySelectorAll(".key[data-key]").forEach((keyEl) => {
+        keyEl.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          let char = keyEl.getAttribute("data-key");
+          if (isShiftActive && char.length === 1) {
+            char = char.toUpperCase();
+          }
+          currentQuery += char;
+          updateDisplay();
+        });
+      });
+
+      // Shift / Caps toggle
+      shiftBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        let char = keyEl.getAttribute("data-key");
-        if (isShiftActive && char.length === 1) {
-          char = char.toUpperCase();
-        }
-        currentQuery += char;
-        updateDisplay();
+        isShiftActive = !isShiftActive;
+        shiftBtn.style.backgroundColor = isShiftActive ? "var(--accent)" : "";
+        document.querySelectorAll(".key[data-key]").forEach((keyEl) => {
+          const char = keyEl.getAttribute("data-key");
+          if (char !== " ") {
+            keyEl.textContent = isShiftActive
+              ? char.toUpperCase()
+              : char.toLowerCase();
+          }
+        });
       });
-    });
 
-    // Shift / Caps toggle
-    shiftBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      isShiftActive = !isShiftActive;
-      shiftBtn.style.backgroundColor = isShiftActive ? "var(--accent)" : "";
-      document.querySelectorAll(".key[data-key]").forEach(keyEl => {
-        const char = keyEl.getAttribute("data-key");
-        if (char !== " ") {
-          keyEl.textContent = isShiftActive ? char.toUpperCase() : char.toLowerCase();
-        }
-      });
-    });
-
-    // Apagar (Backspace)
-    backspaceBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (currentQuery.length > 0) {
-        currentQuery = currentQuery.slice(0, -1);
-        updateDisplay();
-      }
-    });
-
-    // Limpar tudo
-    clearBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      currentQuery = "";
-      updateDisplay();
-    });
-
-    // Executar busca
-    function triggerSearch() {
-      closeKeyboard();
-      const query = currentQuery.trim();
-      if (query) {
-        fetchVideos(query);
-      }
-    }
-
-    searchKeyBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      triggerSearch();
-    });
-
-    // Botão "X" para fechar/esconder o teclado virtual sem apagar o texto
-    clearSearchBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      closeKeyboard();
-    });
-
-    // Suporte para tecla Enter física (se conectado a teclado físico ou volante)
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
+      // Apagar (Backspace)
+      backspaceBtn.addEventListener("click", (e) => {
         e.preventDefault();
+        e.stopPropagation();
+        if (currentQuery.length > 0) {
+          currentQuery = currentQuery.slice(0, -1);
+          updateDisplay();
+        }
+      });
+
+      // Limpar tudo
+      clearBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        currentQuery = "";
+        updateDisplay();
+      });
+
+      // Executar busca
+      function triggerSearch() {
+        closeKeyboard();
+        const query = currentQuery.trim();
+        if (query) {
+          fetchVideos(query);
+        }
+      }
+
+      searchKeyBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         triggerSearch();
-      }
-    });
+      });
 
-    // Requisição à YouTube Data API v3
-    async function fetchVideos(query) {
-      statusContainer.innerHTML = '<div class="spinner"></div><div class="status-msg">Carregando vídeos...</div>';
-      videoGrid.innerHTML = "";
+      // Botão "X" para fechar/esconder o teclado virtual sem apagar o texto
+      clearSearchBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeKeyboard();
+      });
 
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=16&q=${encodeURIComponent(query)}&key=${API_KEY}`;
-
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.error) {
-          statusContainer.innerHTML = `<div class="status-msg" style="color: #ff6b6b;">Erro: ${data.error.message}</div>`;
-          return;
+      // Suporte para tecla Enter física (se conectado a teclado físico ou volante)
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          triggerSearch();
         }
+      });
 
-        if (!data.items || data.items.length === 0) {
-          statusContainer.innerHTML = '<div class="status-msg">Nenhum resultado encontrado.</div>';
-          return;
+      // Requisição à YouTube Data API v3
+      async function fetchVideos(query) {
+        statusContainer.innerHTML =
+          '<div class="spinner"></div><div class="status-msg">Carregando vídeos...</div>';
+        videoGrid.innerHTML = "";
+
+        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=16&q=${encodeURIComponent(query)}&key=${API_KEY}`;
+
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+
+          if (data.error) {
+            statusContainer.innerHTML = `<div class="status-msg" style="color: #ff6b6b;">Erro: ${data.error.message}</div>`;
+            return;
+          }
+
+          statusContainer.innerHTML = "";
+          renderVideos(data.items);
+        } catch (err) {
+          statusContainer.innerHTML =
+            '<div class="status-msg" style="color: #ff6b6b;">Erro de rede ao conectar à API do YouTube.</div>';
         }
-
-        statusContainer.innerHTML = "";
-        renderVideos(data.items);
-      } catch (err) {
-        statusContainer.innerHTML = '<div class="status-msg" style="color: #ff6b6b;">Erro de rede ao conectar à API do YouTube.</div>';
       }
-    }
 
-    // Renderização dos cards de vídeo
-    function renderVideos(items) {
-      videoGrid.innerHTML = "";
-      items.forEach(item => {
-        const videoId = item.id.videoId;
-        const { title, channelTitle, thumbnails } = item.snippet;
-        const thumbUrl = thumbnails.medium ? thumbnails.medium.url : thumbnails.default.url;
+      // Renderização dos cards de vídeo
+      function renderVideos(items) {
+        videoGrid.innerHTML = "";
+        items.forEach((item) => {
+          const videoId = item.id.videoId;
+          const { title, channelTitle, thumbnails } = item.snippet;
+          const thumbUrl = thumbnails.medium
+            ? thumbnails.medium.url
+            : thumbnails.default.url;
 
-        const card = document.createElement("a");
-        card.className = "video-card";
-        card.href = `https://www.youtube.com/watch?v=${videoId}`;
-        card.target = "_blank";
-        card.rel = "noopener noreferrer";
+          const card = document.createElement("a");
+          card.className = "video-card";
+          card.href = `https://www.youtube.com/watch?v=${videoId}`;
+          card.target = "_blank";
+          card.rel = "noopener noreferrer";
 
-        card.innerHTML = `
+          card.innerHTML = `
           <div class="thumbnail-wrapper">
             <img src="${thumbUrl}" alt="${title}" loading="lazy">
           </div>
@@ -676,14 +332,14 @@
           </div>
         `;
 
-        videoGrid.appendChild(card);
-      });
-    }
+          videoGrid.appendChild(card);
+        });
+      }
 
-    // Inicialização com a busca padrão
-    window.addEventListener("DOMContentLoaded", () => {
-      fetchVideos(INITIAL_SEARCH);
-    });
-  </script>
-</body>
+      // Inicialização com a busca padrão
+      window.addEventListener("DOMContentLoaded", () => {
+        fetchVideos(INITIAL_SEARCH);
+      });
+    </script>
+  </body>
 </html>
